@@ -15,7 +15,7 @@ local cjson             = require "cjson.safe"
 local to_hex            = require "resty.string".to_hex
 local random_bytes      = require "resty.random".bytes
 
-local __ = { ver = "v24.10.17" }
+local __ = { ver = "v26.07.23" }
 
 local HTTP_ERR = {
     [400] = "协议或者参数非法",
@@ -231,6 +231,7 @@ __.request = function(req)
         method  = req.body and "POST" or "GET",
         body    = req.body,
         headers = headers,
+        keepalive_timeout = 7000,  -- 微信支付接口连接池空闲最大超时为 8 秒, 这里设置为 7000 毫秒
     })
     if not res then return nil, err, -1 end
 
