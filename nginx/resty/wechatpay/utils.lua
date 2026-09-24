@@ -15,7 +15,7 @@ local cjson             = require "cjson.safe"
 local to_hex            = require "resty.string".to_hex
 local random_bytes      = require "resty.random".bytes
 
-local __ = { ver = "v26.07.23" }
+local __ = { ver = "v26.09.24" }
 
 local HTTP_ERR = {
     [400] = "协议或者参数非法",
@@ -199,7 +199,7 @@ end
 
 -- http请求
 __.request = function(req)
--- @req     : { url, body?, args? : table, boundary, multipart }
+-- @req     : { url, body?, args? : table, boundary, multipart, accept? }
 -- @return  : res?: any, err?: string, code?: string | number
 
     local  conf = wechatpay.conf.get()
@@ -217,7 +217,7 @@ __.request = function(req)
     local headers = {
         ["Content-Type"]    = req.boundary and ( "multipart/form-data;boundary=" .. req.boundary )
                            or req.body     and "application/json" or nil,
-        ["Accept"]          = "application/json",
+        ["Accept"]          = req.accept or "application/json",
         ["Accept-Language"] = "zh-CN",
         ["Authorization"]   = authorization,
         ["Wechatpay-Serial"]= conf.sys_serial_no,   -- 平台证书序列号
@@ -242,6 +242,9 @@ __.request = function(req)
 
     -- 处理成功，无返回Body
     if res.status == 202 or res.status == 204 then return {} end
+
+    -- 图片请求处理，直接返回body(输出二进制图片)
+    if req.accept == "*/*" then return res.body end
 
     local obj = res.body and cjson.decode(res.body)
 
